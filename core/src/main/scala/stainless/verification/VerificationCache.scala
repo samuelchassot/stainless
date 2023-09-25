@@ -51,10 +51,6 @@ trait VerificationCache extends VerificationChecker { self =>
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
         utils.Canonization(program)(program.symbols, vc.condition)
 
-      println(f"DEBUG SAM: tested vc.satisfiability = ${vc.satisfiability}")
-      println(f"DEBUG SAM: tested canonicalSymbols = $canonicalSymbols")
-      println(f"DEBUG SAM: tested canonicalExpr = $canonicalExpr")
-
       val key = serializer.serialize((vc.satisfiability, canonicalSymbols, canonicalExpr))
 
       println(f"DEBUG SAM: tested key = $key")
