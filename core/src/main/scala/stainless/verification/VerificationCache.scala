@@ -51,9 +51,14 @@ trait VerificationCache extends VerificationChecker { self =>
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
         utils.Canonization(program)(program.symbols, vc.condition)
 
+      println(f"DEBUG SAM: tested vc.satisfiability = ${vc.satisfiability}")
+      println(f"DEBUG SAM: tested canonicalSymbols = $canonicalSymbols")
+      println(f"DEBUG SAM: tested canonicalExpr = $canonicalExpr")
+
       val key = serializer.serialize((vc.satisfiability, canonicalSymbols, canonicalExpr))
+
       println(f"DEBUG SAM: tested key = $key")
-      println(f"DEBUG SAM: tested key = $key")
+
       if (vccache contains key) {
         reporter.debug(s"Cache hit: '${vc.kind}' VC for ${vc.fid.asString} @${vc.getPos}...")(using DebugSectionVerification)
         given DebugSectionCacheHit.type = DebugSectionCacheHit
@@ -85,6 +90,7 @@ trait VerificationCache extends VerificationChecker { self =>
 
         val result = super.checkVC(vc, origVC, sf)
         if (result.isValid && vc.condition != BooleanLiteral(true)) {
+          println(f"DEBUG SAM: caching the VC: $vc")
           vccache addPersistently key
         }
 
@@ -107,12 +113,7 @@ object VerificationCache {
   /** Cache with the ability to save itself to disk. */
   private class Cache(cacheFile: File) {
     // API
-    def contains(key: SerializationResult): Boolean = {
-      println("DEBUG SAM cache content:")
-      println(underlying)
-      println()
-      underlying contains key
-    }
+    def contains(key: SerializationResult): Boolean = underlying contains key
     def +=(key: SerializationResult) = underlying += key -> unusedCacheValue
     def addPersistently(key: SerializationResult): Unit = {
       this += key
