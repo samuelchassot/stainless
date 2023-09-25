@@ -56,7 +56,5 @@ RUN bash -c "source $SDKMAN_DIR/bin/sdkman-init.sh && \
 
 RUN source "$SDKMAN_DIR/bin/sdkman-init.sh"
 
-RUN pip3 install shutils==0.1.0 --break-system-packages
-
 ENV PATH="/workspaces/stainless/frontends/dotty/target/universal/stage/bin:${PATH}"
 ENV PATH="/workspaces/stainless/frontends/scalac/target/universal/stage/bin:${PATH}"
