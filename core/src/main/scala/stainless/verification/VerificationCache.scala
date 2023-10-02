@@ -9,11 +9,10 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.io.FileInputStream
 import java.io.FileOutputStream
-
 import scala.collection.concurrent.TrieMap
-import scala.util.{ Success, Failure }
-
+import scala.util.{Failure, Success}
 import inox.solvers.SolverFactory
+import stainless.verification.VerificationCache.serializer
 
 object DebugSectionCacheHit extends inox.DebugSection("cachehit")
 object DebugSectionCacheMiss extends inox.DebugSection("cachemiss")
@@ -51,9 +50,20 @@ trait VerificationCache extends VerificationChecker { self =>
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
         utils.Canonization(program)(program.symbols, vc.condition)
 
+      println(f"DEBUG SAM: tested key before serializing = (${vc.satisfiability}, $canonicalSymbols, $canonicalExpr)")
       val key = serializer.serialize((vc.satisfiability, canonicalSymbols, canonicalExpr))
 
-      println(f"DEBUG SAM: tested key = $key")
+      println(f"DEBUG SAM: tested key after serializing = $key")
+
+      println("CACHE CONTENT")
+      vccache.underlyingContentDebug.foreach(s => {
+        println(f"VC BEGIN")
+        val debug_deserialized = serializer.deserialize[(Boolean, Symbols, Expr)](s)
+        println(debug_deserialized._1)
+        println(debug_deserialized._2)
+        println(debug_deserialized._3)
+      })
+      val x = 1 / 0
 
       if (vccache contains key) {
         reporter.debug(s"Cache hit: '${vc.kind}' VC for ${vc.fid.asString} @${vc.getPos}...")(using DebugSectionVerification)
@@ -105,11 +115,16 @@ trait VerificationCache extends VerificationChecker { self =>
 object VerificationCache {
   private val serializer = utils.Serializer(stainless.trees)
   import serializer.{given, _}
+  import stainless.trees.Symbols
+
 
   /** Cache with the ability to save itself to disk. */
   private class Cache(cacheFile: File) {
     // API
     def contains(key: SerializationResult): Boolean = underlying contains key
+
+    def underlyingContentDebug: Iterable[serializer.SerializationResult] = underlying.keys
+
     def +=(key: SerializationResult) = underlying += key -> unusedCacheValue
     def addPersistently(key: SerializationResult): Unit = {
       this += key
