@@ -63,6 +63,8 @@ class SplitCallBack(components: Seq[Component])(using override val context: inox
     reporter.debug(s"\tclasses   -> [${classes.map { _.id }.sorted mkString ", "}]")
     reporter.debug(s"\ttype defs -> [${typeDefs.map { _.id }.sorted mkString ", "}]")
 
+    reporter.info(s"In SplitCallback, endExtractions ${this.canonization}")
+
     this.synchronized {
       recentIdentifiers ++= (classes map (_.id)) ++ (functions map (_.id)) ++ (typeDefs map (_.id))
       toProcess ++= functions map (_.id)
@@ -80,6 +82,7 @@ class SplitCallBack(components: Seq[Component])(using override val context: inox
     }
 
     processSymbols(symbols)
+
 
     if (report != null) report = report.filter(recentIdentifiers.toSet)
     recentIdentifiers.clear()

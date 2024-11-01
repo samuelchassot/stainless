@@ -5,6 +5,8 @@ package verification
 
 
 import java.io.File
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.Files
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.FileInputStream
@@ -58,6 +60,13 @@ trait VerificationCache extends VerificationChecker { self =>
     //      that the event is rare enough and therefore will not result in huge cache files.
 
     val (time, tryResult) = timers.verification.cache.runAndGetTime {
+
+      reporter.debug(s"Symbols before canonisation for ${vc.fid.asString} @${vc.getPos}...")(using DebugSectionVerification)
+      reporter.debug(" ## SORTS ##")
+      reporter.debug(program.symbols.sorts.values.map(_.asString).toList.sorted.mkString("\n\n"))
+      reporter.debug(" ## FUNCTIONS ##")
+      reporter.debug(program.symbols.functions.values.map(_.asString).toList.sorted.mkString("\n\n"))
+
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
         utils.Canonization(program)(program.symbols, vc.condition)
 
@@ -231,6 +240,14 @@ object VerificationCache {
     def get(ctx: inox.Context): Cache = this.synchronized {
       val cacheFile: File = utils.Caches.getCacheFile(ctx, utils.Caches.getCacheFilename(ctx))
       ctx.reporter.info(s"Loading cache from ${cacheFile.getAbsolutePath}")
+      if(!cacheFile.exists) {
+        ctx.reporter.info(s"Cache file does not exist")
+      } else {
+        val attr = Files.readAttributes(cacheFile.toPath, classOf[BasicFileAttributes]);
+        ctx.reporter.info(s"creationTime: ${attr.creationTime()}")
+        ctx.reporter.info(s"lastAccessTime: ${attr.lastAccessTime()}")
+        ctx.reporter.info(s"lastModifiedTime: ${attr.lastModifiedTime()}")
+      }
 
       // db.getOrElse(cacheFile, {
         val cache = new Cache(ctx, cacheFile)
