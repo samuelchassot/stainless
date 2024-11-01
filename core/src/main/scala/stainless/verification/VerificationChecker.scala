@@ -452,6 +452,8 @@ object VerificationChecker {
     startedVerification.set(false)
   }
 
+  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+
   def verify(p: StainlessProgram, ctx: inox.Context)
             (vcs: Seq[VC[p.trees.type]]): Future[Map[VC[p.trees.type], VCResult[p.Model]]] = {
     class Checker extends VerificationChecker {
@@ -468,6 +470,15 @@ object VerificationChecker {
       new Checker
     }
 
-    checker.verify(vcs)
+    val vcResultsFuture = checker.verify(vcs)
+    vcResultsFuture.andThen { case _ => 
+      checker match {
+        case c: VerificationCache => c.closeCache()
+        case _ =>
+      }
+    }
+    
+    
+    
   }
 }

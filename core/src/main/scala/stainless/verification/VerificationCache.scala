@@ -39,9 +39,13 @@ trait VerificationCache extends VerificationChecker { self =>
   import VerificationCache._
   import serializer._
 
-  private lazy val vccache = CacheLoader.get(context)
-
   private val binaryCacheFlag = context.options.findOptionOrDefault(utils.Caches.optBinaryCache)
+  
+  private var vccache: VerificationCache.Cache = CacheLoader.get(context)
+
+  def closeCache(): Unit = {
+    vccache.closeFileOutputStream()
+  }
 
   override def checkVC(vc: VC, origVC: VC, sf: SolverFactory { val program: self.program.type }) = {
     reporter.debug(s" - Checking cache: '${vc.kind}' VC for ${vc.fid} @${vc.getPos}...")(using DebugSectionVerification)
@@ -142,7 +146,10 @@ object VerificationCache {
     def +=(key: CacheKey) = underlying += key -> unusedCacheValue
     def addPersistently(key: CacheKey): Unit = {
       this += key
-      this.synchronized { CacheKeySerializer.serialize(key, out) }
+      this.synchronized { 
+        ctx.reporter.info(s"add key persistently")
+        CacheKeySerializer.serialize(key, out) 
+      }
     }
 
     object CacheKeySerializer {
@@ -172,9 +179,13 @@ object VerificationCache {
     private val unusedCacheValue = ()
 
     // output stream used to save verified VCs
-    private val out =
-      if (cacheFile.exists) new FileOutputStream(cacheFile, true)
+    private var out = openFileOutputStream()
+     
+    def openFileOutputStream(): FileOutputStream = if (cacheFile.exists) then new FileOutputStream(cacheFile, true)
       else new FileOutputStream(cacheFile)
+
+    def closeFileOutputStream(): Unit = out.close()
+    
   }
 
 
@@ -219,8 +230,9 @@ object VerificationCache {
      */
     def get(ctx: inox.Context): Cache = this.synchronized {
       val cacheFile: File = utils.Caches.getCacheFile(ctx, utils.Caches.getCacheFilename(ctx))
+      ctx.reporter.info(s"Loading cache from ${cacheFile.getAbsolutePath}")
 
-      db.getOrElse(cacheFile, {
+      // db.getOrElse(cacheFile, {
         val cache = new Cache(ctx, cacheFile)
 
         if (cacheFile.exists) {
@@ -229,6 +241,7 @@ object VerificationCache {
           try {
             while (true) {
               val ck = cache.CacheKeySerializer.deserialize(in)
+              ctx.reporter.info(s"read a new key")
               cache += ck
             }
           } catch {
@@ -240,7 +253,7 @@ object VerificationCache {
 
         db(cacheFile) = cache
         cache
-      })
+      // })
     }
   }
 }
