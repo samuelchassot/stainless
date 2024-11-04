@@ -58,13 +58,20 @@ trait VerificationCache extends VerificationChecker { self =>
     //      that the event is rare enough and therefore will not result in huge cache files.
 
     val (time, tryResult) = timers.verification.cache.runAndGetTime {
+      reporter.info(s"program.symbols.functions = ${program.symbols.functions.keySet.map(_.uniqueName)}")
+      reporter.info(s"program.symbols.sorts = ${program.symbols.sorts.keySet.map(_.uniqueName)}")
+      reporter.info(s"vc.condition = ${vc.condition}")
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
         utils.Canonization(program)(program.symbols, vc.condition)
 
+      reporter.info(s"canonicalSymbols.functions = ${canonicalSymbols.functions.keySet.map(_.uniqueName)}")
+      reporter.info(s"canonicalSymbols.sorts = ${canonicalSymbols.sorts.keySet.map(_.uniqueName)}")
+      reporter.info(s"canonicalExpr = ${canonicalExpr}")
 
       val serialized = serializer.serialize((vc.satisfiability, canonicalSymbols, canonicalExpr))
 
       val key: CacheKey = vccache.computeKey(serialized.bytes)
+      reporter.info(s"key value = ${key.content.toList}")
       reporter.debug(s"Cache key size: ${key.content.size} bytes")(using DebugSectionVerification)
       if (vccache.contains(key)) {
         reporter.debug(s"Cache hit: '${vc.kind}' VC for ${vc.fid.asString} @${vc.getPos}...")(using DebugSectionVerification)

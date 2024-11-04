@@ -9,6 +9,7 @@ import scala.jdk.CollectionConverters._
 import scala.collection.mutable.{ Map => MutableMap }
 import scala.io.{Source, BufferedSource}
 import scala.concurrent.Future
+import stainless.ast.Symbol
 
 
 /**
