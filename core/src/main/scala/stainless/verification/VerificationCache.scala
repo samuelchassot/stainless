@@ -63,18 +63,26 @@ trait VerificationCache extends VerificationChecker { self =>
 
       reporter.info(s"Symbols before canonisation for ${vc.fid.asString} @${vc.getPos}...")
       reporter.info(" ## SORTS ##")
-      reporter.info(program.symbols.sorts.keySet.toList.sorted.map(_.uniqueName))
+      reporter.info(program.symbols.sorts.keys.map(_.uniqueName))
       reporter.info(" ## FUNCTIONS ##")
-      reporter.info(program.symbols.functions.keySet.toList.sorted.map(_.uniqueName))
+      reporter.info(program.symbols.functions.keys.map(_.uniqueName))
 
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
         utils.Canonization(program)(program.symbols, vc.condition)
 
-      reporter.info(s"canonicalSymbols.functions = ${canonicalSymbols.functions.keySet.map(_.uniqueName)}")
-      reporter.info(s"canonicalSymbols.sorts = ${canonicalSymbols.sorts.keySet.map(_.uniqueName)}")
+      reporter.info(s"canonicalSymbols.functions = ${canonicalSymbols.functions.keys.map(_.uniqueName)}")
+      reporter.info(s"canonicalSymbols.sorts = ${canonicalSymbols.sorts.keys.map(_.uniqueName)}")
       reporter.info(s"canonicalExpr = ${canonicalExpr}")
 
       val serialized = serializer.serialize((vc.satisfiability, canonicalSymbols, canonicalExpr))
+      val deserialized = serializer.deserialize[(Boolean, Symbols, Expr)](serialized)
+      reporter.info(s"deserialized = ${deserialized}")
+      reporter.info(s"deserialised canonicalSymbols.functions = ${deserialized._2.functions.keys.map(_.uniqueName)}")
+      reporter.info(s"deserialised canonicalSymbols.sorts = ${deserialized._2.sorts.keys.map(_.uniqueName)}")
+      reporter.info(s"deserialised canonicalExpr = ${deserialized._3}")
+
+
+      reporter.info(s"Serialized bytes: ${serialized.bytes.map(byte => f"$byte%02X").mkString(" ")}")
 
       val key: CacheKey = vccache.computeKey(serialized.bytes)
       reporter.info(s"key value = ${key.content.toList}")
