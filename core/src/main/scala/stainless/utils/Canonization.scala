@@ -49,6 +49,8 @@ class Canonization(val trees: stainless.ast.Trees) { self =>
       nid
     }
 
+
+
     final def functions: Seq[FunDef] = transformedFunctions.toSeq
     final def sorts: Seq[ADTSort] = transformedSorts.toSeq
   }
@@ -56,7 +58,15 @@ class Canonization(val trees: stainless.ast.Trees) { self =>
   def apply(syms: Symbols, expr: Expr): (Symbols, Expr) = {
     val transformer = new IdTransformer(syms)
     val newExpr = transformer.transform(expr)
-    val newSyms = NoSymbols.withFunctions(transformer.functions).withSorts(transformer.sorts)
+    // SAM 05.11.2024: Sort the sort constructors and functions to make the output deterministic, especially for caching purposes with --watch
+    val sortedSorts = transformer.sorts.map(s => trees.ADTSort(s.id, s.tparams, s.constructors.sortBy(c => c.fields.toList.mkString), s.flags))
+    val sortedFunctions = transformer.functions.sortBy(f => f.id.uniqueName + f.fullBody.hashCode())
+    val newSyms = NoSymbols.withFunctions(sortedFunctions).withSorts(sortedSorts)
+    println("IN CANONIZATION BEGIN ----------------------------------------------------------")
+    println(s"newSyms.functions = ${newSyms.functions}")
+    println(s"newSyms.sorts = ${newSyms.sorts}")
+    println(s"newExpr = $newExpr")
+    println("IN CANONIZATION END ----------------------------------------------------------")
     (newSyms, newExpr)
   }
 

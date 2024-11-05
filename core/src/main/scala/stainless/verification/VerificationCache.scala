@@ -68,7 +68,7 @@ trait VerificationCache extends VerificationChecker { self =>
       reporter.info(program.symbols.functions.keys.map(_.uniqueName))
 
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
-        utils.Canonization(program)(program.symbols, vc.condition)
+        utils.Canonization(program).apply(program.symbols, vc.condition)
 
       reporter.info(s"canonicalSymbols.functions = ${canonicalSymbols.functions.keys.map(_.uniqueName)}")
       reporter.info(s"canonicalSymbols.sorts = ${canonicalSymbols.sorts.keys.map(_.uniqueName)}")
