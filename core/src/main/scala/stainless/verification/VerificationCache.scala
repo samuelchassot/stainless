@@ -61,11 +61,11 @@ trait VerificationCache extends VerificationChecker { self =>
 
     val (time, tryResult) = timers.verification.cache.runAndGetTime {
 
-      reporter.debug(s"Symbols before canonisation for ${vc.fid.asString} @${vc.getPos}...")(using DebugSectionVerification)
-      reporter.debug(" ## SORTS ##")
-      reporter.debug(program.symbols.sorts.values.map(_.asString).toList.sorted.mkString("\n\n"))
-      reporter.debug(" ## FUNCTIONS ##")
-      reporter.debug(program.symbols.functions.values.map(_.asString).toList.sorted.mkString("\n\n"))
+      reporter.info(s"Symbols before canonisation for ${vc.fid.asString} @${vc.getPos}...")
+      reporter.info(" ## SORTS ##")
+      reporter.info(program.symbols.sorts.keySet.toList.sorted.map(_.uniqueName))
+      reporter.info(" ## FUNCTIONS ##")
+      reporter.info(program.symbols.functions.keySet.toList.sorted.map(_.uniqueName))
 
       val (canonicalSymbols, canonicalExpr): (Symbols, Expr) =
         utils.Canonization(program)(program.symbols, vc.condition)
