@@ -33,16 +33,16 @@ class Canonization(val trees: stainless.ast.Trees) { self =>
     }
 
     override def transform(id: Identifier): Identifier = {
-      val visited = ids contains id
+      val visited = ids.contains(id)
       val nid = ids.getOrElse(id, {
         val res = freshId()
         ids(id) = res
         res
       })
 
-      if ((symbols.functions contains id) && !visited) {
+      if ((symbols.functions.contains(id)) && !visited) {
         transformedFunctions += transform(symbols.getFunction(id))
-      } else if ((symbols.sorts contains id) && !visited) {
+      } else if ((symbols.sorts.contains(id)) && !visited) {
         transformedSorts += transform(symbols.getSort(id))
       }
 
